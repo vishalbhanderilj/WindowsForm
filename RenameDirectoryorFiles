@@ -1,0 +1,234 @@
+# WindowsForm
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using MySql.Data.MySqlClient;
+using System.IO;
+
+
+namespace RenameFiles
+{
+    public partial class Form1 : Form
+    {
+        //int folderid;
+        public Form1()
+        {
+            InitializeComponent();
+            Replace.Visible = false;
+            //this.BackColor = Color.FromArgb(0, 64, 0);
+           
+        }
+        static string connection = "server=192.168.100.54;port=3306;database=database;user id = development; password=password;";
+        MySqlConnection ObjCon = new MySqlConnection(connection);
+        MySqlCommand cmd;
+        MySqlDataAdapter adapt;
+        DataTable dt;
+
+        public void GetFolderID()
+        {
+            string getFolderId_Query = "Select folderid from folder where foldername like '" + new DirectoryInfo(txt_sourcePath.Text).Name+"'";
+           
+            cmd = new MySqlCommand(getFolderId_Query, ObjCon);
+            cmd.CommandText = getFolderId_Query;
+            if (ObjCon.State != ConnectionState.Closed)
+            {
+                ObjCon.Open();
+            }
+            try
+            {
+                int FolderID = (Int32)cmd.ExecuteScalar();
+                
+                
+                
+                   
+                    //MessageBox.Show(FolderID.ToString());
+                    ObjCon.Close();
+               
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+                ObjCon.Close();
+            }
+            
+        }
+        private void checkfiles(string[] files,string sourcepath,int folderid)
+        {
+            try
+            {
+                ObjCon.Open();
+                dt = new DataTable();
+
+                string getfiles_Query = "select fileid,filename from files where folderid='" + folderid + "'";
+                adapt = new MySqlDataAdapter(getfiles_Query, ObjCon);
+                adapt.Fill(dt);
+                ObjCon.Close();
+                
+                string f1 = folderid.ToString();
+                string d1 = Path.Combine(sourcepath, f1);
+                if(folderid > 0)
+                {
+                    if (Directory.Exists(sourcepath))
+                    {
+                        Directory.CreateDirectory(d1);
+                    }
+                }
+
+                
+
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    string fname = Convert.ToString(dt.Rows[i]["filename"]);
+                    foreach (string s in files)
+                    {
+                        string filename = Path.GetFileName(s);
+                        if (fname.ToLower() == filename.ToLower())
+                        {
+                            string filepath1 = Path.Combine(sourcepath, s);
+                            string fileid = Convert.ToString(dt.Rows[i]["fileid"]);
+                            // Console.WriteLine(Convert.ToString(dt.Rows[i]["fileid"]));
+                            string destinationpath = Path.Combine(d1, fileid);
+
+                            File.Copy(filepath1, destinationpath, true);
+
+
+                        }
+
+                    }
+
+                   
+                    //Console.WriteLine("Filename=" + Convert.ToString(fname));
+                }
+
+                label3.Text = "all file name changed successfully";
+
+                 //MessageBox.Show("all files name change successfully");
+
+
+
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString(),"Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+            }
+           
+
+
+
+            
+        }
+
+
+        public void Replace_Click(object sender, EventArgs e)
+        {
+            string sourcepath = txt_sourcePath.Text;
+            /* ObjCon.Open();
+             MessageBox.Show("Connection established successfully");
+             ObjCon.Close();*/
+            GetFolderID();
+            if (Directory.Exists(sourcepath))
+            {
+                string[] folders = Directory.GetDirectories(sourcepath);
+                string[] files = Directory.GetFiles(sourcepath);
+                
+                //checkfiles(files, sourcepath);
+            }
+                          
+                 
+
+        }
+
+        private void Get_directories_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (txt_sourcePath.Text != "")
+                {
+                    string sourcepath = txt_sourcePath.Text;
+                    
+                    DirectoryInfo di = new DirectoryInfo(sourcepath);
+                    DirectoryInfo[] diarr = di.GetDirectories();
+
+
+
+                    foreach (DirectoryInfo dri in diarr)
+                    {
+                       
+                        
+                        
+                        //var foldername = dri;
+                        Console.WriteLine(dri);
+                        int FOlderid = folderidCount(dri.ToString());
+
+                        //get all files from perticular Directories 
+                        string[] files = Directory.GetFiles(Path.Combine(sourcepath, dri.ToString()));
+
+                        foreach (string s in files)
+                        {
+                            string filename = Path.GetFileName(s);
+                            // Console.WriteLine(filename);
+                        }
+                        checkfiles(files, sourcepath, FOlderid);
+                    }  
+
+                }
+                else
+                {
+                    MessageBox.Show("Source Path does not exists", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+                                      
+        }
+        private int folderidCount(string folder)
+        {
+            int FolderID = 0;
+            try
+            {
+                string getFolderId_Query = "Select folderid from folder where foldername like '" + new DirectoryInfo(folder).Name + "'";
+                cmd = new MySqlCommand(getFolderId_Query, ObjCon);
+                cmd.CommandText = getFolderId_Query;
+                if (ConnectionState.Closed == 0)
+                {
+                    ObjCon.Open();
+                }
+                try
+                {
+                     FolderID = (Int32)cmd.ExecuteScalar();
+                    //folderid = Convert.ToInt32(FolderID);
+                    label3.Text = FolderID.ToString();
+                    Application.DoEvents();
+                    
+
+                   // MessageBox.Show(FolderID.ToString());
+
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.ToString());
+                }
+                ObjCon.Close();
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return FolderID;
+        }
+    }
+
+}
