@@ -1,0 +1,63 @@
+   string folder = textBox1.Text.ToLower();
+
+            string ReplaceFolder = folder.Replace("-", " ").Replace("_", " ");
+            // string Sfolder = folder.Split().ToString();
+
+            string Finalfolder = string.Join(" ", ReplaceFolder.Split().Where(x => x != ""));
+            label2.Text = Finalfolder;
+            Console.WriteLine("Final Folder::::" + Finalfolder);
+            string[] Sfolder = Finalfolder.Split();
+
+            string[] MonthArray = new string[] { "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december" };
+
+            string month = "";
+            int year = 0;
+            for(int i = 0; i < Sfolder.Length; i++)
+            {
+                for(int j = 0; j < MonthArray.Length; j++)
+                {
+                    if (Sfolder[i] == MonthArray[j])
+                    {
+                        Console.WriteLine(Sfolder[i]);
+                        month = Sfolder[i];
+
+
+                        if (i < Sfolder.Length-1)
+                        {
+                            if (int.TryParse(Sfolder[i + 1], out year))
+                            {
+                                for (int k = 1970; k <= 2018; k++)
+                                {
+                                    if (k == int.Parse(Sfolder[i + 1]))
+                                    {
+                                        year = k;
+                                        //MessageBox.Show("YEarrr::" + k);
+
+                                    }
+                                    else
+                                    {
+                                        continue;
+
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                      
+                    }
+
+                }
+
+            }
+            MessageBox.Show("Month and Year==>   " + month + " " + year);
+
+        }
+    }
