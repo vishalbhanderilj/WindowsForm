@@ -1,0 +1,105 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace FLYdocsCleanUpService
+{
+    class FLYDocsClear
+    {    
+        int Delete_Interval;
+        int Move_Interval;
+        string SourcePath;
+        string DestinationPath;
+        int Timer_Interval;
+
+
+        DateTime CheckDate;
+
+        public Service1()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnStart(string[] args)
+        {
+            ReadConfiguration();
+            if (CheckDate != DateTime.Now)
+            {
+                DeleteTimer.Enabled = true;
+                DeleteTimer.Interval = Timer_Interval * 60000; // give the value of time interval in minutes.
+                DeleteFile();
+                CheckDate = DateTime.Now;
+            }
+
+        }
+
+        protected override void OnStop()
+        {
+        }
+
+        public void ReadConfiguration()
+        {
+            string strMove = ConfigurationManager.AppSettings["Move_Interval"];
+            if (!int.TryParse(strMove, out Move_Interval))
+            {
+                Move_Interval = 10;
+            }
+
+            Move_Interval = Convert.ToInt32(ConfigurationManager.AppSettings["Move_Interval"]);
+            Delete_Interval = Convert.ToInt32(ConfigurationManager.AppSettings["Delete_Interval"]);
+            SourcePath = ConfigurationManager.AppSettings["Source_Path"];
+            DestinationPath = ConfigurationManager.AppSettings["Destination_Path"];
+            Timer_Interval = ConfigurationManager.AppSettings["Timer_Interval"];
+
+        }
+        public void DeleteFile()
+        {
+            try
+            {
+
+
+                string[] Files = Directory.GetFiles(SourcePath);
+                for (int i = 0; i < Files.Length; i++)
+                {
+                    //Here we will find wheter the file is 7 days old 
+                    if (isDueForDelete(Files[i]))
+                    {
+                        File.Delete(Files[i]);
+                    }
+                }
+
+
+            }
+            catch (Ex)
+            {
+
+            }
+
+        }
+        private Boolean isDueForDelete(string FilePath)
+        {
+            DateTime FileCreationTime = File.GetCreationTime(FilePath);
+            double Days = DateTime.Now.Subtract(FileCreationTime).TotalDays;
+            if (Days > Delete_Interval)
+            {
+                return true;
+
+            }
+            return false;
+        }
+        private void isDueForMove(string Filepath)
+        {
+
+        }
+
+        private void DeleteTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+
+
+            DeleteFile();
+        }
+    }
+}
+
