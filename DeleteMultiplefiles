@@ -1,0 +1,295 @@
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+
+namespace ConsoleApp1
+{
+    class Program
+    {
+        static int Delete_Interval;
+        static int Move_Interval;
+        //static string SourcePath;
+        static string[] SourcepathArray;
+        static string DestinationPath;
+        static DateTime CheckDate;
+        static string LogFilePath;
+        static string DirectoryName1;
+        static string destpath;
+        
+        static void Main(string[] args)
+        {
+            ReadConfiguration();
+            if (CheckDate != DateTime.Today.Date)
+            {
+             /*   for(int i = 0; i < SourcepathArray.Length; i++)
+                {
+                    moveFiles(SourcepathArray[i]);
+                }*/
+
+               
+                DeleteFile();
+                
+                CheckDate = DateTime.Today.Date;
+            }
+            //Console.ReadLine();
+        }
+        
+        public static void ReadConfiguration()
+        {
+            string strMove = ConfigurationManager.AppSettings["Move_Interval"];
+            if (!int.TryParse(strMove, out Move_Interval))
+            {
+                Move_Interval = 2;
+            }
+
+            //Move_Interval = Convert.ToInt32(ConfigurationManager.AppSettings["Move_Interval"]);
+
+            Delete_Interval = Convert.ToInt32(ConfigurationManager.AppSettings["Delete_Interval"]);
+            SourcepathArray = ConfigurationManager.AppSettings.AllKeys.Where(key => key.StartsWith("MovePath")).Select(key => ConfigurationManager.AppSettings[key]).ToArray();
+            DestinationPath = ConfigurationManager.AppSettings["Destination_Path"];
+            LogFilePath = ConfigurationManager.AppSettings["LogPath"];
+
+        }
+        public static void DeleteFile()
+        {
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(DestinationPath);
+                DirectoryInfo[] diArr = di.GetDirectories();
+                string[] DirFiles = Directory.GetFiles(DestinationPath);
+                if (DirFiles.Length > 0)
+                {
+                    for (int i = 0; i < DirFiles.Length; i++)
+                    {
+                        int count = DirFiles.Length;
+                        int k = 0;
+                        if (isDueForDelete(DirFiles[i]))
+                        {
+                            File.Delete(DirFiles[i]);
+                            k++;
+                        }
+                    }
+                }
+                else
+                {
+
+                }
+                
+                
+
+                //final function
+                for(int i = 0;i< diArr.Length; i++)
+                {
+                    int count = diArr.Length;
+                    int k1 = 0;
+
+                    string path1 = new DirectoryInfo(diArr[i].ToString()).Name;
+                    string[] files = Directory.GetFiles(Path.Combine(DestinationPath,path1));
+
+                    for(int j =0; j < files.Length; j++)
+                    {
+                        int count1 = files.Length;
+                        int k2 = 0;
+                        {
+                            if (isDueForDelete(files[j]))
+                            {
+                                File.Delete(files[j]);
+                                k2 += 1;
+                            }
+                            if(k2 == count1)
+                            {
+                                Directory.Delete(Path.Combine(DestinationPath,path1));
+                                k1 += 1;
+                            }
+                        }
+
+                    }
+                    if (k1 == count)
+                    {
+                        Directory.Delete(DestinationPath);
+                    }
+                }
+
+
+
+
+
+              /*  if(diArr.Length > 0)
+                {
+                    foreach (DirectoryInfo dri in diArr)
+                    {
+
+
+                        string[] files = Directory.GetFiles(Path.Combine(DestinationPath, dri.ToString()));
+                        for (int i = 0; i < files.Length; i++)
+                        {
+                            //Here we will find wheter the file is 7 days old 
+                            if (isDueForDelete(files[i]))
+                            {
+                                File.Delete(files[i]);
+                                string[] filesArray = Directory.GetFiles(Path.Combine(DestinationPath, dri.ToString()));
+                                if (filesArray.Length == 0)
+                                {
+                                    Directory.Delete(Path.Combine(DestinationPath, dri.ToString()));
+                                    string[] FilesArray = Directory.GetFiles(Path.Combine(DestinationPath));
+
+                                    if (FilesArray.Length == 0)
+                                    {
+                                        Directory.Delete(DestinationPath);
+                                    }
+
+                                }*/
+                                //string[] FilesArray = Directory.GetFiles(DestinationPath);
+                                /*if (FilesArray.Length == 0)
+                                {
+                                    Directory.Delete(DestinationPath);
+                                }*/
+                       /*     }
+
+
+                        }
+
+
+                    }
+                }
+                else
+                {
+                    Directory.Delete(DestinationPath);
+                }
+
+               
+
+                /*string[] Files = Directory.GetFiles(DestinationPath);
+                for (int i = 0; i < Files.Length; i++)
+                {
+                    //Here we will find wheter the file is 7 days old 
+                    if (isDueForDelete(Files[i]))
+                    {
+                        File.Delete(Files[i]);
+                        string[] FilesArray = Directory.GetFiles(DestinationPath);
+                        if(FilesArray.Length == 0)
+                        {
+                            Directory.Delete(DestinationPath);
+                        }
+                    }
+                    
+
+                }*/
+
+
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+        }
+        
+        private static Boolean isDueForMove(string Filepath)
+        {
+            DateTime fileCreationtime = File.GetCreationTime(Filepath);
+            double days = DateTime.Now.Subtract(fileCreationtime).Days;
+            if(days > Move_Interval)
+            {
+                return true;
+                
+            }
+            return false;
+
+        }
+        private static void moveFiles(string spath)
+        {
+            if (Directory.Exists(spath))
+            {
+                 DirectoryName1 = Path.GetFileName(spath);
+            }
+
+            destpath = Path.Combine(DestinationPath, DirectoryName1);
+
+            if (!Directory.Exists(destpath))
+            {
+                Directory.CreateDirectory(destpath);
+            }
+            string[] files = Directory.GetFiles(spath);
+           
+            
+            for(int i = 0; i < files.Length; i++)
+            {
+                if (isDueForMove(files[i]))
+                {
+                    string filename = Path.GetFileName(files[i]);
+                    string destinationFile = Path.Combine(destpath, filename);
+                    File.Move(files[i],destinationFile);
+                    //LogMove(filename, SourcePath, destinationFile);
+                    
+                }
+            }
+
+        }
+        private static Boolean isDueForDelete(string FilePath)
+        {
+
+
+            DateTime FileCreationTime = File.GetCreationTime(FilePath);
+            Console.WriteLine("Creation time:::"+FileCreationTime);
+            double Days = DateTime.Now.Subtract(FileCreationTime).Days;
+            Console.WriteLine("Days::::" + Days);
+            if (Days > Delete_Interval)
+            {
+                return true;
+
+            }
+            return false;
+        }
+
+        private static void DeleteTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+
+
+            //DeleteFile();
+        }
+        public void LogFile(string FileName, string Sorcepath, string DestinationPath)
+        {
+            StreamWriter log;
+            string LogPath = Path.Combine(LogFilePath, "LogMove.txt");
+            if (!File.Exists(LogPath))
+            {
+                log = new StreamWriter("LogMove.txt");
+            }
+            else
+            {
+                log = File.AppendText("LogMove.txt");
+            }
+            log.WriteLine("Date Time:" + DateTime.Now + "  FileName:" + FileName + "  FilePath:" + Sorcepath + "Destination Path:" + DestinationPath);
+            log.Close();
+        }
+        public static  void LogMove(string FileName, string Sorcepath, string DestinationPath)
+        {
+            
+            string LogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LogMove.txt");
+           
+
+            //log.WriteLine("Date Time:" + DateTime.Now + "  FileName:" + FileName + "  FilePath:" + Sorcepath + "Destination Path:" + DestinationPath);
+
+            // File.WriteAllText(LogPath + "\\" + FileName + "TIFF.csv", Str + AllFileList + Environment.NewLine);
+            //File.WriteAllText(LogPath, "FileName::" + FileName + "||" + "SourcePath::" + SourcePath + "||" + "DestinationPath::" + DestinationPath + "||" + "Date and Time::" + DateTime.Now + Environment.NewLine);
+
+           
+
+            // This text is always added, making the file longer over time
+            // if it is not deleted.
+            //File.AppendAllText(LogPath, "FileName::" + FileName + "||" + "SourcePath::" + SourcePath + "||" + "DestinationPath::" + DestinationPath + "||" + "Date and Time::" + DateTime.Now + Environment.NewLine);
+            //string appendText = "This is extra text" + Environment.NewLine;
+            //File.AppendAllText(,);
+            
+
+        }
+
+
+    }
+}
+
