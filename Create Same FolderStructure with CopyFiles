@@ -1,0 +1,162 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+namespace SameFolderStructure
+{
+    public partial class Form1 : Form
+    {
+        string Source_Path;
+        string Destination_Path;
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private Boolean isDueForMove(string Filepath)
+        {
+            DateTime fileCreationtime = File.GetCreationTime(Filepath);
+            double days = DateTime.Now.Subtract(fileCreationtime).Days;
+            if (days >= 0)
+            {
+                return true;
+
+            }
+            return false;
+
+        }
+        private void CreateDirectory(string sourcepath)
+        {
+            try
+            {
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+            }
+            string filedestinationpath;
+            string destinationpath;
+            string s1path;
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(sourcepath);
+                DirectoryInfo[] diArr = di.GetDirectories();
+
+                string[] files = Directory.GetFiles(sourcepath);
+                if (files.Length > 0)
+                {
+                    filedestinationpath = Path.Combine(Destination_Path);
+                    Movefiles(sourcepath, filedestinationpath);
+                }
+
+                for (int i = 0; i < diArr.Length; i++)
+                {
+                    destinationpath = Path.Combine(Destination_Path, diArr[i].ToString());
+                    s1path = Path.Combine(sourcepath, diArr[i].ToString());
+                    if (!Directory.Exists(destinationpath))
+                    {
+                        Directory.CreateDirectory(destinationpath);
+
+                        Console.WriteLine("DiArray Directory name::" + diArr[i]);
+                    }
+                    Movefiles(s1path, destinationpath);
+                    CreateNestedDirectory(s1path, destinationpath);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+
+        }
+        private void CreateNestedDirectory(string NSourcePath, string NDestPath)
+        {
+            try
+            {
+                string Ndestinationpath;
+                string Ndirecortname = Path.GetFileName(NSourcePath);
+                string Nest_Sourcepath;
+
+                DirectoryInfo nesteddir = new DirectoryInfo(NSourcePath);
+                DirectoryInfo[] nestedDiArr = nesteddir.GetDirectories();
+
+                for (int i = 0; i < nestedDiArr.Length; i++)
+                {
+                    Ndestinationpath = Path.Combine(NDestPath, nestedDiArr[i].ToString());
+                    if (!Directory.Exists(Ndestinationpath))
+                    {
+                        Directory.CreateDirectory(Ndestinationpath);
+                        Console.WriteLine("Directory created at ::" + Ndestinationpath);
+                    }
+
+
+                    Nest_Sourcepath = Path.Combine(NSourcePath, nestedDiArr[i].ToString());
+                    Movefiles(Nest_Sourcepath, Ndestinationpath);
+                    CreateNestedDirectory(Nest_Sourcepath, Ndestinationpath);
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message.ToString());
+            }
+           
+
+        }
+        private void Movefiles(string sourcepath, string DestPath)
+        {
+            try
+            {
+                if (Directory.Exists(sourcepath))
+                {
+                    string[] files = Directory.GetFiles(sourcepath);
+                    if (files.Length > 0)
+                    {
+                        Console.WriteLine("Nofiles are existed at " + sourcepath);
+
+
+                        for (int i = 0; i < files.Length; i++)
+                        {
+                            if (isDueForMove(files[i]))
+                            {
+                                if (!Directory.Exists(DestPath))
+                                {
+                                    Directory.CreateDirectory(DestPath);
+                                }
+                                string stringfilename = Path.GetFileName(files[i]);
+                                Console.WriteLine("Filename::::" + stringfilename);
+                                string filename = files[i].ToString();
+                                Console.WriteLine("SourcePath::::" + sourcepath + "FileName::" + files[i]);
+
+                                Console.WriteLine("DestinationPAth:::" + DestPath);
+                                string fdestination = Path.Combine(DestPath, stringfilename);
+                                File.Copy(files[i], fdestination, true);
+
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+           
+        }
+        private void Move_Click(object sender, EventArgs e)
+        {
+            Source_Path = txt_Source.Text;
+            Destination_Path = txt_Dest.Text;
+            CreateDirectory(Source_Path);
+
+        }
+    }
+}
