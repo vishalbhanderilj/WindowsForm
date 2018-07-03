@@ -1,0 +1,223 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.IO;
+
+
+namespace WindowsFormsApp2
+{
+    public partial class Form1 : Form
+    {
+        string Source_Path;
+        string Destination_Path;
+        string Directory_Name1;
+        string destpath;
+        int k1;
+        string FileDestinationpath;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        private Boolean isDueForMove(string Filepath)
+        {
+            DateTime fileCreationtime = File.GetCreationTime(Filepath);
+            double days = DateTime.Now.Subtract(fileCreationtime).Days;
+            if (days >= 0)
+            {
+                return true;
+
+            }
+            return false;
+
+        }
+
+        //First you have to get all directories list and create all directories 
+        //Then You should get files according to date 
+      /*  private void MoveFFStructure(string spath)
+        {
+            int k2 = 0;
+            int filecount;
+
+            string Destination_path = FileDestinationpath;
+            DirectoryInfo dirInfo = new DirectoryInfo(spath);
+
+            DirectoryInfo[] diArr = dirInfo.GetDirectories();
+            for (int i = 0; i < diArr.Length; i++)
+            {
+                DirectoryName1 = diArr[i].ToString();
+                Destination_path = Path.Combine(DestinationPath, DirectoryName1);
+                Movefiles(Path.Combine(spath, DirectoryName1), Destination_path);
+                Console.WriteLine("DirectoryNAme::" + DirectoryName1);
+                destpath = Path.Combine(DestinationPath, DirectoryName1);
+
+                string Nfolderpath = Path.Combine(spath, DirectoryName1);
+                // string[] Ndir = Directory.GetDirectories(spath, DirectoryName1);
+                string[] NestedFolder = Directory.GetDirectories(Nfolderpath);
+                if (NestedFolder.Length > 0)
+                {
+                    for (int k = 0; k < NestedFolder.Length; k++)
+                    {
+                        Console.WriteLine(NestedFolder[k]);
+                        Console.WriteLine("Path3::" + Path.Combine(spath, DirectoryName1, NestedFolder[k]));
+                        Destination_path = Path.Combine(DestinationPath, NestedFolder[k]);
+                        MoveFFStructure(Path.Combine(spath, DirectoryName1, NestedFolder[k]));
+                    }
+                }
+
+
+                //string[] files = Directory.GetFiles(Path.Combine(spath, diArr[i].ToString()));
+                // filecount = files.Length;
+
+                /*for(int j = 0; j < files.Length; j++)
+                {
+                    if (isDueForMove(files[j]))
+                    {
+
+                        if(!Directory.Exists(destpath))
+                        {
+                            Directory.CreateDirectory(destpath);
+                        }
+                        string filename = Path.GetFileName(files[j]);
+                        string destination = Path.Combine(destpath, filename);
+                        File.Move(files[j], destination);
+                        k2 += 1;
+                        if (k2 == filecount)
+                        {
+                            Directory.Delete(Path.Combine(spath,DirectoryName1));
+                            k2 = 0;
+
+                        }
+                    }
+                }
+
+
+            }
+        }*/
+
+        private void CreateDirectory(string sourcepath)
+        {
+            string filedestinationpath;
+            string destinationpath;
+            string s1path;
+            try
+            {
+                DirectoryInfo di = new DirectoryInfo(sourcepath);
+                DirectoryInfo[] diArr = di.GetDirectories();
+
+                string[] files = Directory.GetFiles(sourcepath);
+                if(files.Length > 0)
+                {
+                    filedestinationpath = Path.Combine(Destination_Path);
+                    Movefiles(sourcepath,filedestinationpath);
+                }
+
+
+                for(int i = 0; i < diArr.Length; i++)
+                {
+                    destinationpath = Path.Combine(Destination_Path,diArr[i].ToString());
+                    s1path = Path.Combine(sourcepath, diArr[i].ToString());
+                    if(!Directory.Exists(destinationpath))
+                    {
+                        Directory.CreateDirectory(destinationpath);
+                       
+                        
+    
+
+                        Console.WriteLine("DiArray Directory name::" + diArr[i]);
+                    }
+                    Movefiles(s1path, destinationpath);
+                    CreateNestedDirectory(s1path,destinationpath);
+
+                }
+                
+
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
+
+        }
+
+        private void CreateNestedDirectory(string NSourcePath,string NDestPath)
+        {
+            string Ndestinationpath;
+            string Ndirecortname = Path.GetFileName(NSourcePath);
+            string Nest_Sourcepath;
+
+            DirectoryInfo nesteddir = new DirectoryInfo(NSourcePath);
+            DirectoryInfo[] nestedDiArr = nesteddir.GetDirectories();
+
+            for (int i = 0; i < nestedDiArr.Length; i++)
+            {
+                Ndestinationpath = Path.Combine(NDestPath,nestedDiArr[i].ToString());
+                if (!Directory.Exists(Ndestinationpath))
+                {
+                    Directory.CreateDirectory(Ndestinationpath);
+                    Console.WriteLine("Directory created at ::" + Ndestinationpath);
+                }
+
+
+                Nest_Sourcepath = Path.Combine(NSourcePath,nestedDiArr[i].ToString());
+                Movefiles(Nest_Sourcepath, Ndestinationpath);
+                CreateNestedDirectory(Nest_Sourcepath, Ndestinationpath);
+            }
+            
+        }
+       // use above code to get all directories now u have to create according to that
+        private void Movefiles(string sourcepath, string DestPath)
+        {
+            if (Directory.Exists(sourcepath))
+            {
+                string[] files = Directory.GetFiles(sourcepath);
+                if (files.Length > 0)
+                {
+                    Console.WriteLine("Nofiles are existed at " + sourcepath);
+
+
+                    for (int i = 0; i < files.Length; i++)
+                    {
+                        if (isDueForMove(files[i]))
+                        {
+                            if (!Directory.Exists(DestPath))
+                            {
+                                Directory.CreateDirectory(DestPath);
+                            }
+                            string stringfilename = Path.GetFileName(files[i]);
+                            Console.WriteLine("Filename::::" + stringfilename);
+                            string filename = files[i].ToString();
+                            Console.WriteLine("SourcePath::::" + sourcepath + "FileName::" + files[i]);
+
+                            Console.WriteLine("DestinationPAth:::" + DestPath);
+                            string fdestination = Path.Combine(DestPath, stringfilename);
+                            File.Copy(files[i], fdestination, true);
+
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        private void Move_Click(object sender, EventArgs e)
+        {
+            Source_Path = textBox1.Text;
+            Destination_Path = textBox2.Text;
+            CreateDirectory(Source_Path);
+           /// MoveFFStructure(SourcePath);
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
